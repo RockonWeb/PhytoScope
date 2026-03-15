@@ -1,10 +1,19 @@
 import { mkdirSync, rmSync } from 'node:fs'
-import { DatabaseSync } from 'node:sqlite'
 import { getPhytoStoragePaths } from '@/lib/server/storagePaths'
 
 type DatabaseState = {
   dataDir: string
-  db: DatabaseSync
+  db: SqliteDatabase
+}
+
+type SqliteDatabase = {
+  exec(sql: string): void
+  close(): void
+  prepare(sql: string): {
+    run: (...params: unknown[]) => unknown
+    get: (...params: unknown[]) => unknown
+    all: (...params: unknown[]) => unknown[]
+  }
 }
 
 declare global {
@@ -18,7 +27,7 @@ const ensureDirectories = () => {
   }
 }
 
-const initializeSchema = (db: DatabaseSync) => {
+const initializeSchema = (db: SqliteDatabase) => {
   db.exec(`
     PRAGMA foreign_keys = ON;
 
@@ -81,7 +90,10 @@ export const getDatabase = () => {
   globalThis.__phytoscopeDatabaseState?.db.close()
   ensureDirectories()
 
-  const db = new DatabaseSync(paths.dbPath)
+  const sqlite = require('node:sqlite') as {
+    DatabaseSync: new (path: string) => SqliteDatabase
+  }
+  const db = new sqlite.DatabaseSync(paths.dbPath)
   initializeSchema(db)
   globalThis.__phytoscopeDatabaseState = {
     dataDir: paths.dataDir,

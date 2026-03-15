@@ -52,6 +52,60 @@ type SourceHealthRow = {
   expires_at: string
 }
 
+type MemoryStore = {
+  analyses: Map<string, AnalysisSummary>
+  payloads: Map<string, { variants: VariantAnnotation[]; workbench: WorkbenchData | null }>
+  sourceCache: Map<
+    string,
+    {
+      source: string
+      requestUrl: string
+      payloadJson: string
+      fetchedAt: string
+      expiresAt: string
+    }
+  >
+  sourceHealth: Map<string, Array<{ status: SourceStatus; checkedAt: string; expiresAt: string }>>
+}
+
+declare global {
+  var __phytoscopeMemoryStore: MemoryStore | undefined
+  var __phytoscopePersistentStorageAvailable: boolean | undefined
+}
+
+const getMemoryStore = (): MemoryStore => {
+  if (!globalThis.__phytoscopeMemoryStore) {
+    globalThis.__phytoscopeMemoryStore = {
+      analyses: new Map(),
+      payloads: new Map(),
+      sourceCache: new Map(),
+      sourceHealth: new Map(),
+    }
+  }
+
+  return globalThis.__phytoscopeMemoryStore
+}
+
+const canUsePersistentStorage = () => {
+  if (typeof globalThis.__phytoscopePersistentStorageAvailable === 'boolean') {
+    return globalThis.__phytoscopePersistentStorageAvailable
+  }
+
+  if (process.env.PHYTOSCOPE_FORCE_MEMORY === '1' || process.env.VERCEL === '1') {
+    globalThis.__phytoscopePersistentStorageAvailable = false
+    return false
+  }
+
+  try {
+    getDatabase()
+    globalThis.__phytoscopePersistentStorageAvailable = true
+    return true
+  } catch {
+    globalThis.__phytoscopePersistentStorageAvailable = false
+    return false
+  }
+}
+
 const parseJson = <T,>(payload: string | null, fallback: T): T => {
   if (!payload) {
     return fallback
@@ -88,6 +142,16 @@ const toSummary = (row: AnalysisRow): AnalysisSummary => ({
 })
 
 export const saveAnalysisResult = (result: UploadAnalysisResult) => {
+  if (!canUsePersistentStorage()) {
+    const store = getMemoryStore()
+    store.analyses.set(result.summary.id, result.summary)
+    store.payloads.set(result.summary.id, {
+      variants: result.variants,
+      workbench: result.workbench,
+    })
+    return
+  }
+
   const db = getDatabase()
   const summary = result.summary
   const saveSummary = db.prepare(`
@@ -158,6 +222,13 @@ export const saveAnalysisResult = (result: UploadAnalysisResult) => {
 }
 
 export const listAnalyses = (): AnalysisSummary[] => {
+  if (!canUsePersistentStorage()) {
+    return Array.from(getMemoryStore().analyses.values()).sort(
+      (left, right) =>
+        right.createdAt.localeCompare(left.createdAt) || right.id.localeCompare(left.id),
+    )
+  }
+
   const db = getDatabase()
   const rows = db
     .prepare('SELECT * FROM analyses ORDER BY created_at DESC, id DESC')
@@ -167,6 +238,21 @@ export const listAnalyses = (): AnalysisSummary[] => {
 }
 
 export const getAnalysisById = (id: string): UploadAnalysisResult | null => {
+  if (!canUsePersistentStorage()) {
+    const summary = getMemoryStore().analyses.get(id)
+    const payload = getMemoryStore().payloads.get(id)
+
+    if (!summary || !payload) {
+      return null
+    }
+
+    return {
+      summary,
+      variants: payload.variants,
+      workbench: payload.workbench,
+    }
+  }
+
   const db = getDatabase()
   const row = db
     .prepare(`
@@ -189,6 +275,10 @@ export const getAnalysisById = (id: string): UploadAnalysisResult | null => {
 }
 
 export const listStoredVariants = () => {
+  if (!canUsePersistentStorage()) {
+    return Array.from(getMemoryStore().payloads.values()).flatMap((row) => row.variants)
+  }
+
   const db = getDatabase()
   const rows = db
     .prepare('SELECT variants_json FROM analysis_payloads')
@@ -198,6 +288,22 @@ export const listStoredVariants = () => {
 }
 
 export const getSourceCache = (cacheKey: string) => {
+  if (!canUsePersistentStorage()) {
+    const row = getMemoryStore().sourceCache.get(cacheKey)
+    if (!row) {
+      return undefined
+    }
+
+    return {
+      cache_key: cacheKey,
+      source: row.source,
+      request_url: row.requestUrl,
+      payload_json: row.payloadJson,
+      fetched_at: row.fetchedAt,
+      expires_at: row.expiresAt,
+    } satisfies SourceCacheRow
+  }
+
   const db = getDatabase()
   return db
     .prepare('SELECT * FROM source_cache WHERE cache_key = ?')
@@ -212,6 +318,17 @@ export const saveSourceCache = (input: {
   fetchedAt: string
   expiresAt: string
 }) => {
+  if (!canUsePersistentStorage()) {
+    getMemoryStore().sourceCache.set(input.cacheKey, {
+      source: input.source,
+      requestUrl: input.requestUrl,
+      payloadJson: input.payloadJson,
+      fetchedAt: input.fetchedAt,
+      expiresAt: input.expiresAt,
+    })
+    return
+  }
+
   const db = getDatabase()
   db.prepare(`
     INSERT INTO source_cache (cache_key, source, request_url, payload_json, fetched_at, expires_at)
@@ -248,6 +365,16 @@ export const readSourceCachePayload = <T,>(cacheKey: string) => {
 }
 
 export const getSourceHealthSnapshots = (speciesId: string) => {
+  if (!canUsePersistentStorage()) {
+    return (getMemoryStore().sourceHealth.get(speciesId) ?? []).map((row) => ({
+      source: row.status.source,
+      species_id: speciesId,
+      status_json: JSON.stringify(row.status),
+      checked_at: row.checkedAt,
+      expires_at: row.expiresAt,
+    }))
+  }
+
   const db = getDatabase()
   return db
     .prepare('SELECT * FROM source_health_checks WHERE species_id = ?')
@@ -259,6 +386,18 @@ export const saveSourceHealthStatuses = (
   statuses: SourceStatus[],
   expiresAt: string,
 ) => {
+  if (!canUsePersistentStorage()) {
+    getMemoryStore().sourceHealth.set(
+      speciesId,
+      statuses.map((status) => ({
+        status,
+        checkedAt: status.lastChecked,
+        expiresAt,
+      })),
+    )
+    return
+  }
+
   const db = getDatabase()
   const statement = db.prepare(`
     INSERT INTO source_health_checks (source, species_id, status_json, checked_at, expires_at)
