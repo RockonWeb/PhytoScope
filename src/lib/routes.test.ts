@@ -22,6 +22,10 @@ const jsonResponse = (payload: unknown) =>
   })
 
 const installExternalFetchMock = () => {
+  const state = {
+    europePmcUrls: [] as string[],
+  }
+
   global.fetch = (async (input) => {
     const url =
       typeof input === 'string'
@@ -130,16 +134,24 @@ const installExternalFetchMock = () => {
     }
 
     if (url.includes('europepmc')) {
+      state.europePmcUrls.push(url)
+
       return jsonResponse({
         resultList: {
           result: [
             {
               id: '1',
-              title: 'High citation article',
-              journalTitle: 'Plant Journal',
+              title:
+                'Analysis of the Tomato &lt;i&gt;mTERF&lt;/i&gt; Gene Family and Study of the Stress Resistance Function of &lt;i&gt;SLmTERF-13&lt;/i&gt;.',
+              journalInfo: {
+                journal: {
+                  isoabbreviation: 'Plants (Basel)',
+                },
+              },
               pubYear: '2024',
-              authorString: 'Author A, Author B',
-              abstractText: 'Useful summary',
+              authorString: 'SU A, GE S, ZHOU B, WANG Z, ZHOU L',
+              abstractText:
+                'The <i>mTERF</i> family regulates stress responses in tomato.',
               citedByCount: 19,
               pmid: '123',
             },
@@ -170,6 +182,8 @@ const installExternalFetchMock = () => {
 
     throw new Error(`Unexpected external URL in test: ${url}`)
   }) as typeof fetch
+
+  return state
 }
 
 test.afterEach(() => {
@@ -267,7 +281,7 @@ test('POST /api/analysis/upload creates queued non-VCF runs with saved files', a
 test('GET /api/literature applies server-side filtering and sorting', async () => {
   process.env.PHYTOSCOPE_DATA_DIR = createTempDataDir()
   resetDatabaseForTests()
-  installExternalFetchMock()
+  const fetchMock = installExternalFetchMock()
 
   const response = await literatureGet(
     new Request(
@@ -278,8 +292,17 @@ test('GET /api/literature applies server-side filtering and sorting', async () =
 
   assert.equal(response.status, 200)
   assert.equal(payload.query, 'AT1G01010')
+  assert.match(fetchMock.europePmcUrls[0] ?? '', /resultType=core/)
   assert.equal(payload.items.length, 2)
-  assert.equal(payload.items[0].title, 'High citation article')
+  assert.equal(
+    payload.items[0].title,
+    'Analysis of the Tomato mTERF Gene Family and Study of the Stress Resistance Function of SLmTERF-13.',
+  )
+  assert.equal(payload.items[0].journal, 'Plants (Basel)')
+  assert.equal(
+    payload.items[0].snippet,
+    'The mTERF family regulates stress responses in tomato.',
+  )
   assert.equal(payload.items[1].title, 'Newer lower citation article')
 })
 
