@@ -31,20 +31,22 @@ export const Sidebar = () => {
 
   return (
     <>
-      <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-genome-border bg-genome-bg/85 p-6 backdrop-blur-xl lg:flex lg:flex-col">
+      <aside className="border-genome-border bg-genome-bg/85 fixed inset-y-0 left-0 hidden w-64 border-r p-6 backdrop-blur-xl lg:flex lg:flex-col">
         <div className="mb-10 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl genome-gradient shadow-xl shadow-primary/20">
-            <div className="h-5 w-5 rounded-sm border-2 border-white/90 rotate-45" />
+          <div className="genome-gradient shadow-primary/20 flex h-11 w-11 items-center justify-center rounded-2xl shadow-xl">
+            <div className="h-5 w-5 rotate-45 rounded-sm border-2 border-white/90" />
           </div>
           <div>
             <p className="text-lg font-semibold tracking-tight text-white">
               {APP_CONFIG.name}
             </p>
-            <p className="text-xs text-slate-500">Plant genomics research cockpit</p>
+            <p className="text-xs text-slate-500">
+              Plant genomics research cockpit
+            </p>
           </div>
         </div>
 
-        <nav className="space-y-1.5">
+        <nav className="space-y-1.5" aria-label="Основная навигация">
           {navItems.map((item) => {
             const active = isActivePath(pathname, item.href)
 
@@ -52,6 +54,7 @@ export const Sidebar = () => {
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={active ? 'page' : undefined}
                 className={cn(
                   'group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all',
                   active
@@ -63,7 +66,9 @@ export const Sidebar = () => {
                   size={18}
                   className={cn(
                     'transition-colors',
-                    active ? 'text-primary' : 'text-slate-500 group-hover:text-white',
+                    active
+                      ? 'text-primary'
+                      : 'text-slate-500 group-hover:text-white',
                   )}
                 />
                 {item.label}
@@ -72,25 +77,38 @@ export const Sidebar = () => {
           })}
         </nav>
 
-        <div className="mt-auto space-y-4 rounded-2xl border border-genome-border bg-genome-card/70 p-4">
+        <div className="border-genome-border bg-genome-card/70 mt-auto space-y-4 rounded-2xl border p-4">
           <div>
             <p className="text-sm font-semibold text-white">Source strategy</p>
             <p className="mt-1 text-sm leading-relaxed text-slate-400">
-              Open sources are primary. TAIR remains optional, while partial source failure degrades to link cards instead of breaking the page.
+              Open sources are primary. TAIR remains optional, while partial
+              source failure degrades to link cards instead of breaking the
+              page.
             </p>
           </div>
-          <p className="text-xs text-slate-500">{APP_CONFIG.supportEmail}</p>
-          <button
-            type="button"
-            className="flex w-full items-center gap-3 rounded-xl border border-genome-border px-3 py-2 text-sm text-slate-400 transition-colors hover:text-white"
+          <div className="border-genome-border bg-muted/40 rounded-xl border px-3 py-2.5">
+            <p className="text-xs tracking-[0.18em] text-slate-500 uppercase">
+              Локальная сессия
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-400">
+              Авторизация не используется, поэтому завершать сессию здесь не
+              требуется.
+            </p>
+          </div>
+          <a
+            href={`mailto:${APP_CONFIG.supportEmail}`}
+            className="border-genome-border flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-sm text-slate-400 transition-colors hover:text-white"
           >
-            <LogOut size={16} />
-            Завершить сессию
-          </button>
+            <LogOut size={16} aria-hidden="true" />
+            Связаться с поддержкой
+          </a>
         </div>
       </aside>
 
-      <nav className="fixed inset-x-4 bottom-4 z-50 flex items-center justify-between rounded-3xl border border-genome-border bg-genome-card/90 p-2 shadow-2xl shadow-black/40 backdrop-blur-xl lg:hidden">
+      <nav
+        className="border-genome-border bg-genome-card/90 fixed inset-x-4 bottom-4 z-50 flex items-center justify-between rounded-3xl border p-2 shadow-2xl shadow-black/40 backdrop-blur-xl lg:hidden"
+        aria-label="Нижняя навигация"
+      >
         {navItems.map((item) => {
           const active = isActivePath(pathname, item.href)
 
@@ -98,6 +116,7 @@ export const Sidebar = () => {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={active ? 'page' : undefined}
               className={cn(
                 'flex min-w-0 flex-1 flex-col items-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-medium transition-colors',
                 active ? 'text-primary' : 'text-slate-400',

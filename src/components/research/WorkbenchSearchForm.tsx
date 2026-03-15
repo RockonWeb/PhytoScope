@@ -4,7 +4,11 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { DEFAULT_SPECIES_ID, SAMPLE_QUERIES, SPECIES_OPTIONS } from '@/lib/constants'
+import {
+  DEFAULT_SPECIES_ID,
+  SAMPLE_QUERIES,
+  SPECIES_OPTIONS,
+} from '@/lib/constants'
 import type { SpeciesId } from '@/types/genome'
 
 export function WorkbenchSearchForm({
@@ -29,55 +33,92 @@ export function WorkbenchSearchForm({
   }
 
   return (
-    <div className="space-y-5">
+    <form
+      className="space-y-5"
+      onSubmit={(event) => {
+        event.preventDefault()
+        runSearch()
+      }}
+    >
       <div className="grid gap-3 lg:grid-cols-[1fr_220px_160px]">
-        <label className="relative">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                runSearch()
-              }
-            }}
-            placeholder="AT1G01010, NAC001, 1:3631-5899, 1:3631 G>A"
-            className="w-full rounded-2xl border border-genome-border bg-muted/40 py-3 pl-11 pr-4 text-sm text-white outline-none transition-colors focus:border-primary"
-          />
-        </label>
-
-        <select
-          value={speciesId}
-          onChange={(event) => setSpeciesId(event.target.value as SpeciesId)}
-          className="rounded-2xl border border-genome-border bg-muted/40 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-primary"
-        >
-          {SPECIES_OPTIONS.map((species) => (
-            <option key={species.id} value={species.id}>
-              {species.label}
-            </option>
-          ))}
-        </select>
-
-        <Button className="h-full rounded-2xl" onClick={() => runSearch()}>
-          Построить workbench
-        </Button>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {SAMPLE_QUERIES.map((sample) => (
-          <button
-            key={sample}
-            type="button"
-            onClick={() => {
-              setQuery(sample)
-              runSearch(sample)
-            }}
-            className="rounded-full border border-genome-border px-4 py-2 text-sm text-slate-300 transition-colors hover:border-primary/40 hover:text-white"
+        <div className="space-y-2">
+          <label
+            htmlFor="workbench-query"
+            className="text-sm font-medium text-slate-300"
           >
-            {sample}
-          </button>
-        ))}
+            Запрос
+          </label>
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-slate-500"
+              aria-hidden="true"
+            />
+            <input
+              id="workbench-query"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="AT1G01010, NAC001, 1:3631-5899, 1:3631 G>A"
+              className="border-genome-border bg-muted/40 focus:border-primary w-full rounded-2xl border py-3 pr-4 pl-11 text-sm text-white transition-colors outline-none"
+              aria-describedby="workbench-query-help"
+            />
+          </div>
+          <p id="workbench-query-help" className="text-xs text-slate-500">
+            Можно вводить AGI ID, gene symbol, locus или simple variant
+            notation.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <label
+            htmlFor="workbench-species"
+            className="text-sm font-medium text-slate-300"
+          >
+            Species
+          </label>
+          <select
+            id="workbench-species"
+            value={speciesId}
+            onChange={(event) => setSpeciesId(event.target.value as SpeciesId)}
+            className="border-genome-border bg-muted/40 focus:border-primary rounded-2xl border px-4 py-3 text-sm text-white transition-colors outline-none"
+          >
+            {SPECIES_OPTIONS.map((species) => (
+              <option key={species.id} value={species.id}>
+                {species.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          <span className="text-sm font-medium text-slate-300">Действие</span>
+          <Button type="submit" className="h-[52px] w-full rounded-2xl">
+            Построить workbench
+          </Button>
+        </div>
       </div>
-    </div>
+
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-slate-300">Примеры запросов</p>
+        <div
+          className="flex flex-wrap gap-2"
+          role="group"
+          aria-label="Примеры запросов"
+        >
+          {SAMPLE_QUERIES.map((sample) => (
+            <button
+              key={sample}
+              type="button"
+              onClick={() => {
+                setQuery(sample)
+                runSearch(sample)
+              }}
+              className="border-genome-border hover:border-primary/40 rounded-full border px-4 py-2 text-sm text-slate-300 transition-colors hover:text-white"
+            >
+              {sample}
+            </button>
+          ))}
+        </div>
+      </div>
+    </form>
   )
 }

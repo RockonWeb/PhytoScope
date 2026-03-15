@@ -42,7 +42,11 @@ import {
   TableRow,
 } from '@/components/ui/Table'
 import { useAnalysisStore } from '@/hooks/useAnalysisStore'
-import { STATUS_LABELS, SUPPORTED_FORMATS, SPECIES_OPTIONS } from '@/lib/constants'
+import {
+  STATUS_LABELS,
+  SUPPORTED_FORMATS,
+  SPECIES_OPTIONS,
+} from '@/lib/constants'
 import { downloadVariantsCsv, printAnalysisReport } from '@/lib/exporters'
 import { analysisService } from '@/services/analysisService'
 import { genomeApi } from '@/services/genomeApi'
@@ -67,12 +71,15 @@ const initialFilters: ReportFilters = {
 }
 
 export default function ReportsPage() {
-  const { reports, analysesById, isLoading, error, fetchReports } = useAnalysisStore()
+  const { reports, analysesById, isLoading, error, fetchReports } =
+    useAnalysisStore()
   const [exportingId, setExportingId] = useState<string | null>(null)
   const [filters, setFilters] = useState<ReportFilters>(initialFilters)
   const deferredSearch = useDeferredValue(filters.search ?? '')
   const [compareIds, setCompareIds] = useState<string[]>([])
-  const [comparisonResults, setComparisonResults] = useState<UploadAnalysisResult[]>([])
+  const [comparisonResults, setComparisonResults] = useState<
+    UploadAnalysisResult[]
+  >([])
   const [comparisonLoading, setComparisonLoading] = useState(false)
   const [comparisonError, setComparisonError] = useState<string | null>(null)
 
@@ -101,12 +108,16 @@ export default function ReportsPage() {
       }),
     [deferredSearch, filters, reports],
   )
-  const completedReports = filteredReports.filter((report) => report.status === 'completed')
+  const completedReports = filteredReports.filter(
+    (report) => report.status === 'completed',
+  )
   const queuedReports = filteredReports.filter(
     (report) => report.status === 'queued' || report.status === 'processing',
   )
   const storageUsedGb = useMemo(
-    () => filteredReports.reduce((sum, report) => sum + report.fileSizeMb, 0) / 1024,
+    () =>
+      filteredReports.reduce((sum, report) => sum + report.fileSizeMb, 0) /
+      1024,
     [filteredReports],
   )
   const averageDepth = useMemo(() => {
@@ -132,7 +143,9 @@ export default function ReportsPage() {
   useEffect(() => {
     setCompareIds((current) =>
       current.filter((id) =>
-        reports.some((report) => report.id === id && report.status === 'completed'),
+        reports.some(
+          (report) => report.id === id && report.status === 'completed',
+        ),
       ),
     )
   }, [reports])
@@ -168,7 +181,9 @@ export default function ReportsPage() {
 
         if (results.some((result) => !result)) {
           setComparisonResults([])
-          setComparisonError('Не удалось загрузить оба результата для сравнения.')
+          setComparisonError(
+            'Не удалось загрузить оба результата для сравнения.',
+          )
           return
         }
 
@@ -258,8 +273,8 @@ export default function ReportsPage() {
               История plant reports
             </h1>
             <p className="mt-2 text-sm text-slate-400">
-              Фильтруйте архив по species/status/format и сравнивайте два completed run по
-              coverage и variant overlap.
+              Фильтруйте архив по species/status/format и сравнивайте два
+              completed run по coverage и variant overlap.
             </p>
           </div>
           <Button asChild>
@@ -292,98 +307,144 @@ export default function ReportsPage() {
           <CardHeader>
             <CardTitle>Фильтры архива</CardTitle>
             <CardDescription>
-              Поиск по file name, run ID, focus gene и статусу, плюс узкие фильтры по
-              species, status и format.
+              Поиск по file name, run ID, focus gene и статусу, плюс узкие
+              фильтры по species, status и format.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-3 xl:grid-cols-[1fr_220px_180px_180px_140px]">
-              <label className="relative">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-                <input
-                  value={filters.search ?? ''}
+              <div className="space-y-2">
+                <label
+                  htmlFor="reports-search"
+                  className="text-sm font-medium text-slate-300"
+                >
+                  Поиск по архиву
+                </label>
+                <div className="relative">
+                  <Search
+                    className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-slate-500"
+                    aria-hidden="true"
+                  />
+                  <input
+                    id="reports-search"
+                    value={filters.search ?? ''}
+                    onChange={(event) =>
+                      setFilters((current) => ({
+                        ...current,
+                        search: event.target.value,
+                      }))
+                    }
+                    placeholder="run ID, file, focus gene, status"
+                    className="border-genome-border bg-muted/40 focus:border-primary w-full rounded-2xl border py-3 pr-4 pl-11 text-sm text-white transition-colors outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="reports-species"
+                  className="text-sm font-medium text-slate-300"
+                >
+                  Species
+                </label>
+                <select
+                  id="reports-species"
+                  value={filters.speciesId ?? 'all'}
                   onChange={(event) =>
                     setFilters((current) => ({
                       ...current,
-                      search: event.target.value,
+                      speciesId: event.target
+                        .value as ReportFilters['speciesId'],
                     }))
                   }
-                  placeholder="run ID, file, focus gene, status"
-                  className="w-full rounded-2xl border border-genome-border bg-muted/40 py-3 pl-11 pr-4 text-sm text-white outline-none transition-colors focus:border-primary"
-                />
-              </label>
+                  className="border-genome-border bg-muted/40 focus:border-primary rounded-2xl border px-4 py-3 text-sm text-white transition-colors outline-none"
+                >
+                  <option value="all">Все species</option>
+                  {SPECIES_OPTIONS.map((species) => (
+                    <option key={species.id} value={species.id}>
+                      {species.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-              <select
-                value={filters.speciesId ?? 'all'}
-                onChange={(event) =>
-                  setFilters((current) => ({
-                    ...current,
-                    speciesId: event.target.value as ReportFilters['speciesId'],
-                  }))
-                }
-                className="rounded-2xl border border-genome-border bg-muted/40 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-primary"
-              >
-                <option value="all">Все species</option>
-                {SPECIES_OPTIONS.map((species) => (
-                  <option key={species.id} value={species.id}>
-                    {species.label}
-                  </option>
-                ))}
-              </select>
+              <div className="space-y-2">
+                <label
+                  htmlFor="reports-status"
+                  className="text-sm font-medium text-slate-300"
+                >
+                  Статус
+                </label>
+                <select
+                  id="reports-status"
+                  value={filters.status ?? 'all'}
+                  onChange={(event) =>
+                    setFilters((current) => ({
+                      ...current,
+                      status: event.target.value as ReportFilters['status'],
+                    }))
+                  }
+                  className="border-genome-border bg-muted/40 focus:border-primary rounded-2xl border px-4 py-3 text-sm text-white transition-colors outline-none"
+                >
+                  <option value="all">Все статусы</option>
+                  {Object.entries(STATUS_LABELS).map(([status, label]) => (
+                    <option key={status} value={status}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-              <select
-                value={filters.status ?? 'all'}
-                onChange={(event) =>
-                  setFilters((current) => ({
-                    ...current,
-                    status: event.target.value as ReportFilters['status'],
-                  }))
-                }
-                className="rounded-2xl border border-genome-border bg-muted/40 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-primary"
-              >
-                <option value="all">Все статусы</option>
-                {Object.entries(STATUS_LABELS).map(([status, label]) => (
-                  <option key={status} value={status}>
-                    {label}
-                  </option>
-                ))}
-              </select>
+              <div className="space-y-2">
+                <label
+                  htmlFor="reports-format"
+                  className="text-sm font-medium text-slate-300"
+                >
+                  Формат
+                </label>
+                <select
+                  id="reports-format"
+                  value={filters.format ?? 'all'}
+                  onChange={(event) =>
+                    setFilters((current) => ({
+                      ...current,
+                      format: event.target.value as ReportFilters['format'],
+                    }))
+                  }
+                  className="border-genome-border bg-muted/40 focus:border-primary rounded-2xl border px-4 py-3 text-sm text-white transition-colors outline-none"
+                >
+                  <option value="all">Все форматы</option>
+                  {SUPPORTED_FORMATS.map((format) => (
+                    <option key={format.label} value={format.label}>
+                      {format.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-              <select
-                value={filters.format ?? 'all'}
-                onChange={(event) =>
-                  setFilters((current) => ({
-                    ...current,
-                    format: event.target.value as ReportFilters['format'],
-                  }))
-                }
-                className="rounded-2xl border border-genome-border bg-muted/40 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-primary"
-              >
-                <option value="all">Все форматы</option>
-                {SUPPORTED_FORMATS.map((format) => (
-                  <option key={format.label} value={format.label}>
-                    {format.label}
-                  </option>
-                ))}
-              </select>
-
-              <Button
-                variant="outline"
-                onClick={() => setFilters(initialFilters)}
-                disabled={
-                  !filters.search &&
-                  (filters.speciesId ?? 'all') === 'all' &&
-                  (filters.status ?? 'all') === 'all' &&
-                  (filters.format ?? 'all') === 'all'
-                }
-              >
-                Сбросить
-              </Button>
+              <div className="space-y-2">
+                <span className="text-sm font-medium text-slate-300">
+                  Действие
+                </span>
+                <Button
+                  variant="outline"
+                  className="h-[52px] w-full"
+                  onClick={() => setFilters(initialFilters)}
+                  disabled={
+                    !filters.search &&
+                    (filters.speciesId ?? 'all') === 'all' &&
+                    (filters.status ?? 'all') === 'all' &&
+                    (filters.format ?? 'all') === 'all'
+                  }
+                >
+                  Сбросить
+                </Button>
+              </div>
             </div>
 
-            <p className="text-sm text-slate-500">
-              Показано {filteredReports.length} из {reports.length} runs. Для сравнения выберите
-              два completed run.
+            <p className="text-sm text-slate-500" aria-live="polite">
+              Показано {filteredReports.length} из {reports.length} runs. Для
+              сравнения выберите два completed run.
             </p>
           </CardContent>
         </Card>
@@ -392,7 +453,8 @@ export default function ReportsPage() {
           <CardHeader>
             <CardTitle>Список запусков</CardTitle>
             <CardDescription>
-              Открывайте dashboard, выгружайте CSV/PDF и собирайте пару runs для compare mode.
+              Открывайте dashboard, выгружайте CSV/PDF и собирайте пару runs для
+              compare mode.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -416,14 +478,20 @@ export default function ReportsPage() {
                 <TableBody>
                   {filteredReports.length ? (
                     filteredReports.map((report) => {
-                      const isSelectedForCompare = compareIds.includes(report.id)
+                      const isSelectedForCompare = compareIds.includes(
+                        report.id,
+                      )
 
                       return (
                         <TableRow key={report.id}>
                           <TableCell>
                             <div className="flex flex-col">
-                              <span className="font-semibold text-white">{report.fileName}</span>
-                              <span className="text-xs text-slate-500">{report.id}</span>
+                              <span className="font-semibold text-white">
+                                {report.fileName}
+                              </span>
+                              <span className="text-xs text-slate-500">
+                                {report.id}
+                              </span>
                             </div>
                           </TableCell>
                           <TableCell>
@@ -441,16 +509,30 @@ export default function ReportsPage() {
                           <TableCell>{renderStatus(report.status)}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex flex-wrap justify-end gap-2">
-                              <Button asChild variant="ghost" size="icon" title="Открыть дашборд">
-                                <Link href={`/dashboard?id=${report.id}`}>
+                              <Button
+                                asChild
+                                variant="ghost"
+                                size="icon"
+                                title="Открыть дашборд"
+                              >
+                                <Link
+                                  href={`/dashboard?id=${report.id}`}
+                                  aria-label={`Открыть dashboard для ${report.fileName}`}
+                                >
                                   <ExternalLink className="h-4 w-4" />
                                 </Link>
                               </Button>
                               <Button
-                                variant={isSelectedForCompare ? 'secondary' : 'outline'}
+                                variant={
+                                  isSelectedForCompare ? 'secondary' : 'outline'
+                                }
                                 size="sm"
                                 onClick={() => toggleCompare(report)}
-                                disabled={report.status !== 'completed' && !isSelectedForCompare}
+                                disabled={
+                                  report.status !== 'completed' &&
+                                  !isSelectedForCompare
+                                }
+                                aria-pressed={isSelectedForCompare}
                                 title={
                                   report.status === 'completed'
                                     ? 'Добавить в compare mode'
@@ -464,8 +546,12 @@ export default function ReportsPage() {
                                 variant="ghost"
                                 size="icon"
                                 title="Скачать CSV"
+                                aria-label={`Скачать CSV для ${report.fileName}`}
                                 onClick={() => void exportCsv(report)}
-                                disabled={exportingId === report.id || report.status !== 'completed'}
+                                disabled={
+                                  exportingId === report.id ||
+                                  report.status !== 'completed'
+                                }
                               >
                                 {exportingId === report.id ? (
                                   <Spinner className="h-4 w-4" />
@@ -477,8 +563,12 @@ export default function ReportsPage() {
                                 variant="ghost"
                                 size="icon"
                                 title="Печатный PDF"
+                                aria-label={`Открыть PDF-версию для ${report.fileName}`}
                                 onClick={() => void exportPdf(report)}
-                                disabled={exportingId === report.id || report.status !== 'completed'}
+                                disabled={
+                                  exportingId === report.id ||
+                                  report.status !== 'completed'
+                                }
                               >
                                 <FileText className="h-4 w-4" />
                               </Button>
@@ -489,7 +579,10 @@ export default function ReportsPage() {
                     })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="py-10 text-center text-slate-500">
+                      <TableCell
+                        colSpan={6}
+                        className="py-10 text-center text-slate-500"
+                      >
                         Под текущие фильтры runs не найдены.
                       </TableCell>
                     </TableRow>
@@ -498,7 +591,10 @@ export default function ReportsPage() {
               </Table>
             )}
             {error ? (
-              <div className="mt-4 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+              <div
+                className="border-destructive/20 bg-destructive/5 text-destructive mt-4 rounded-2xl border px-4 py-3 text-sm"
+                role="alert"
+              >
                 {error}
               </div>
             ) : null}
@@ -524,22 +620,38 @@ export default function ReportsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-3 rounded-2xl border border-genome-border bg-muted/40 p-4">
-              <HardDrive className="h-5 w-5 text-primary" />
+            <div className="border-genome-border bg-muted/40 flex items-center gap-3 rounded-2xl border p-4">
+              <HardDrive className="text-primary h-5 w-5" />
               <div>
-                <p className="text-sm font-semibold text-white">{storageUsedGb.toFixed(1)} GB</p>
-                <p className="text-sm text-slate-400">Суммарный размер текущей выборки</p>
+                <p className="text-sm font-semibold text-white">
+                  {storageUsedGb.toFixed(1)} GB
+                </p>
+                <p className="text-sm text-slate-400">
+                  Суммарный размер текущей выборки
+                </p>
               </div>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-genome-border">
+            <div
+              className="bg-genome-border h-2 overflow-hidden rounded-full"
+              role="progressbar"
+              aria-label="Заполнение локального хранилища"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(
+                Math.min(100, (storageUsedGb / 50) * 100),
+              )}
+            >
               <div
-                className="h-full rounded-full genome-gradient"
-                style={{ width: `${Math.min(100, (storageUsedGb / 50) * 100)}%` }}
+                className="genome-gradient h-full rounded-full"
+                style={{
+                  width: `${Math.min(100, (storageUsedGb / 50) * 100)}%`,
+                }}
               />
             </div>
             <p className="text-sm leading-6 text-slate-400">
-              Архив строится из локального `.phyto/` workspace. С фильтрами выше этот блок
-              помогает быстро оценить вес выбранного подмножества runs.
+              Архив строится из локального `.phyto/` workspace. С фильтрами выше
+              этот блок помогает быстро оценить вес выбранного подмножества
+              runs.
             </p>
           </CardContent>
         </Card>
@@ -548,22 +660,25 @@ export default function ReportsPage() {
           <CardHeader>
             <CardTitle>Последний completed run</CardTitle>
             <CardDescription>
-              Быстрый доступ к самому свежему completed analysis в текущей выборке.
+              Быстрый доступ к самому свежему completed analysis в текущей
+              выборке.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {latestCompletedReport ? (
               <div className="space-y-4">
-                <div className="rounded-2xl border border-genome-border bg-muted/40 p-4">
+                <div className="border-genome-border bg-muted/40 rounded-2xl border p-4">
                   <div className="flex items-center gap-2">
-                    <Trees className="h-4 w-4 text-primary" />
+                    <Trees className="text-primary h-4 w-4" />
                     <p className="text-sm font-semibold text-white">
                       {latestCompletedReport.fileName}
                     </p>
                   </div>
                   <p className="mt-2 text-sm text-slate-400">
-                    {latestCompletedReport.speciesId} · {latestCompletedReport.focusGene} ·{' '}
-                    {latestCompletedReport.highImpactVariants} high-impact variants
+                    {latestCompletedReport.speciesId} ·{' '}
+                    {latestCompletedReport.focusGene} ·{' '}
+                    {latestCompletedReport.highImpactVariants} high-impact
+                    variants
                   </p>
                 </div>
                 <div className="flex gap-3">
@@ -638,8 +753,8 @@ function RunComparisonCard({
           <div>
             <CardTitle>Сравнение runs</CardTitle>
             <CardDescription>
-              Выберите два completed run, чтобы сравнить variant overlap, unique genes и
-              ключевые summary metrics.
+              Выберите два completed run, чтобы сравнить variant overlap, unique
+              genes и ключевые summary metrics.
             </CardDescription>
           </div>
           {selectedReports.length ? (
@@ -670,16 +785,26 @@ function RunComparisonCard({
         ) : null}
 
         {error ? (
-          <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <div
+            className="border-destructive/20 bg-destructive/5 text-destructive rounded-2xl border px-4 py-3 text-sm"
+            role="alert"
+          >
             {error}
           </div>
         ) : null}
 
-        {selectedReports.length === 2 && !isLoading && !error && comparisonSummary ? (
+        {selectedReports.length === 2 &&
+        !isLoading &&
+        !error &&
+        comparisonSummary ? (
           <>
             <div className="grid gap-4 md:grid-cols-2">
-              {leftResult ? <ComparisonRunCard result={leftResult} side="A" /> : null}
-              {rightResult ? <ComparisonRunCard result={rightResult} side="B" /> : null}
+              {leftResult ? (
+                <ComparisonRunCard result={leftResult} side="A" />
+              ) : null}
+              {rightResult ? (
+                <ComparisonRunCard result={rightResult} side="B" />
+              ) : null}
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -726,9 +851,18 @@ function RunComparisonCard({
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
-              <GeneBucket title="Shared genes" genes={comparisonSummary.sharedGenes} />
-              <GeneBucket title="A-only genes" genes={comparisonSummary.leftOnlyGenes} />
-              <GeneBucket title="B-only genes" genes={comparisonSummary.rightOnlyGenes} />
+              <GeneBucket
+                title="Shared genes"
+                genes={comparisonSummary.sharedGenes}
+              />
+              <GeneBucket
+                title="A-only genes"
+                genes={comparisonSummary.leftOnlyGenes}
+              />
+              <GeneBucket
+                title="B-only genes"
+                genes={comparisonSummary.rightOnlyGenes}
+              />
             </div>
           </>
         ) : null}
@@ -739,7 +873,7 @@ function RunComparisonCard({
 
 function SelectedRunCard({ report }: { report: AnalysisSummary }) {
   return (
-    <div className="rounded-2xl border border-genome-border bg-muted/40 p-4">
+    <div className="border-genome-border bg-muted/40 rounded-2xl border p-4">
       <div className="flex items-center gap-2">
         <Badge variant="outline">Selected</Badge>
         <p className="text-sm font-semibold text-white">{report.fileName}</p>
@@ -761,19 +895,30 @@ function ComparisonRunCard({
   const report = result.summary
 
   return (
-    <div className="rounded-2xl border border-genome-border bg-muted/40 p-4">
+    <div className="border-genome-border bg-muted/40 rounded-2xl border p-4">
       <div className="flex items-center gap-2">
-        <Badge variant={side === 'A' ? 'secondary' : 'outline'}>Run {side}</Badge>
+        <Badge variant={side === 'A' ? 'secondary' : 'outline'}>
+          Run {side}
+        </Badge>
         <p className="text-sm font-semibold text-white">{report.fileName}</p>
       </div>
       <p className="mt-2 text-xs text-slate-500">{report.id}</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <ComparisonField label="Species" value={`${report.speciesId} · ${report.assemblyId}`} />
+        <ComparisonField
+          label="Species"
+          value={`${report.speciesId} · ${report.assemblyId}`}
+        />
         <ComparisonField label="Format" value={report.format} />
         <ComparisonField label="Focus gene" value={report.focusGene} />
         <ComparisonField label="Variants" value={`${report.variantCount}`} />
-        <ComparisonField label="High impact" value={`${report.highImpactVariants}`} />
-        <ComparisonField label="Mean depth" value={`${report.meanDepth.toFixed(1)}`} />
+        <ComparisonField
+          label="High impact"
+          value={`${report.highImpactVariants}`}
+        />
+        <ComparisonField
+          label="Mean depth"
+          value={`${report.meanDepth.toFixed(1)}`}
+        />
       </div>
     </div>
   )
@@ -782,7 +927,9 @@ function ComparisonRunCard({
 function ComparisonField({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{label}</p>
+      <p className="text-[11px] tracking-[0.18em] text-slate-500 uppercase">
+        {label}
+      </p>
       <p className="mt-2 text-sm font-medium text-white">{value}</p>
     </div>
   )
@@ -798,7 +945,7 @@ function ComparisonMetric({
   helper: string
 }) {
   return (
-    <div className="rounded-2xl border border-genome-border bg-muted/40 p-4">
+    <div className="border-genome-border bg-muted/40 rounded-2xl border p-4">
       <p className="text-sm text-slate-400">{title}</p>
       <p className="mt-2 text-2xl font-bold text-white">{value}</p>
       <p className="mt-2 text-sm text-slate-500">{helper}</p>
@@ -808,7 +955,7 @@ function ComparisonMetric({
 
 function DeltaCard({ title, lines }: { title: string; lines: string[] }) {
   return (
-    <div className="rounded-2xl border border-genome-border bg-muted/40 p-4">
+    <div className="border-genome-border bg-muted/40 rounded-2xl border p-4">
       <p className="text-sm font-semibold text-white">{title}</p>
       <div className="mt-4 space-y-2">
         {lines.map((line) => (
@@ -823,7 +970,7 @@ function DeltaCard({ title, lines }: { title: string; lines: string[] }) {
 
 function GeneBucket({ title, genes }: { title: string; genes: string[] }) {
   return (
-    <div className="rounded-2xl border border-genome-border bg-muted/40 p-4">
+    <div className="border-genome-border bg-muted/40 rounded-2xl border p-4">
       <p className="text-sm font-semibold text-white">{title}</p>
       {genes.length ? (
         <div className="mt-4 flex flex-wrap gap-2">
@@ -845,7 +992,7 @@ function GeneBucket({ title, genes }: { title: string; genes: string[] }) {
 
 function EmptyPanel({ message }: { message: string }) {
   return (
-    <div className="flex min-h-28 items-center justify-center rounded-3xl border border-dashed border-genome-border bg-muted/30 px-4 text-center text-sm text-slate-500">
+    <div className="border-genome-border bg-muted/30 flex min-h-28 items-center justify-center rounded-3xl border border-dashed px-4 text-center text-sm text-slate-500">
       {message}
     </div>
   )
@@ -872,8 +1019,7 @@ function renderStatus(status: AnalysisSummary['status']) {
   if (status === 'processing') {
     return (
       <div className="flex items-center gap-2 text-sm text-amber-400">
-        <Clock3 className="h-4 w-4" />
-        В обработке
+        <Clock3 className="h-4 w-4" />В обработке
       </div>
     )
   }
@@ -881,16 +1027,14 @@ function renderStatus(status: AnalysisSummary['status']) {
   if (status === 'queued') {
     return (
       <div className="flex items-center gap-2 text-sm text-amber-400">
-        <Clock3 className="h-4 w-4" />
-        В очереди
+        <Clock3 className="h-4 w-4" />В очереди
       </div>
     )
   }
 
   return (
     <div className="flex items-center gap-2 text-sm text-rose-400">
-      <XCircle className="h-4 w-4" />
-      С ошибкой
+      <XCircle className="h-4 w-4" />С ошибкой
     </div>
   )
 }
