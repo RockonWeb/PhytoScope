@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   AlertCircle,
@@ -32,6 +32,7 @@ import type { AssemblyId, SpeciesId } from '@/types/genome'
 
 export default function UploadPage() {
   const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
   const [speciesId, setSpeciesId] = useState<SpeciesId>(DEFAULT_SPECIES_ID)
   const [assemblyId, setAssemblyId] = useState<AssemblyId>(
@@ -39,14 +40,8 @@ export default function UploadPage() {
   )
   const [isDragging, setIsDragging] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
-  const {
-    uploadFile,
-    isLoading,
-    progress,
-    error,
-    resetProgress,
-    clearError,
-  } = useAnalysisStore()
+  const { uploadFile, isLoading, progress, error, resetProgress, clearError } =
+    useAnalysisStore()
 
   const acceptedExtensions = useMemo(
     () => SUPPORTED_FORMATS.map((format) => format.extension) as string[],
@@ -54,6 +49,20 @@ export default function UploadPage() {
   )
   const activeError = localError ?? error
   const species = getSpeciesDefinition(speciesId)
+  const resetFileInput = useCallback(() => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }, [])
+
+  const clearSelectedFile = useCallback(() => {
+    setFile(null)
+    resetFileInput()
+  }, [resetFileInput])
+
+  const openFilePicker = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
 
   const handleFileSelection = useCallback(
     (nextFile: File) => {
@@ -65,7 +74,7 @@ export default function UploadPage() {
         setLocalError(
           `Неверный формат файла. Поддерживаются ${acceptedExtensions.join(', ')}.`,
         )
-        setFile(null)
+        clearSelectedFile()
         return
       }
 
@@ -74,7 +83,7 @@ export default function UploadPage() {
       setLocalError(null)
       setFile(nextFile)
     },
-    [acceptedExtensions, clearError, resetProgress],
+    [acceptedExtensions, clearError, clearSelectedFile, resetProgress],
   )
 
   const handleUpload = async () => {
@@ -97,18 +106,25 @@ export default function UploadPage() {
           <Badge variant="outline" className="w-fit">
             Upload workspace
           </Badge>
-          <CardTitle className="text-3xl">Plant-aware upload pipeline</CardTitle>
+          <CardTitle className="text-3xl">
+            Plant-aware upload pipeline
+          </CardTitle>
           <CardDescription>
-            Выберите species, assembly и файл. Для `VCF` приложение строит plant-specific
-            variant cards, а затем разворачивает research context вокруг focus gene.
+            Выберите species, assembly и файл. Для `VCF` приложение строит
+            plant-specific variant cards, а затем разворачивает research context
+            вокруг focus gene.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="space-y-2 text-sm font-medium text-slate-300">
+            <label
+              htmlFor="upload-species"
+              className="space-y-2 text-sm font-medium text-slate-300"
+            >
               Species
               <select
-                className="w-full rounded-2xl border border-genome-border bg-muted/60 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-primary"
+                id="upload-species"
+                className="border-genome-border bg-muted/60 focus:border-primary w-full rounded-2xl border px-4 py-3 text-sm text-white transition-colors outline-none"
                 value={speciesId}
                 onChange={(event) => {
                   const nextSpecies = event.target.value as SpeciesId
@@ -125,12 +141,18 @@ export default function UploadPage() {
               </select>
             </label>
 
-            <label className="space-y-2 text-sm font-medium text-slate-300">
+            <label
+              htmlFor="upload-assembly"
+              className="space-y-2 text-sm font-medium text-slate-300"
+            >
               Assembly
               <select
-                className="w-full rounded-2xl border border-genome-border bg-muted/60 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-primary"
+                id="upload-assembly"
+                className="border-genome-border bg-muted/60 focus:border-primary w-full rounded-2xl border px-4 py-3 text-sm text-white transition-colors outline-none"
                 value={assemblyId}
-                onChange={(event) => setAssemblyId(event.target.value as AssemblyId)}
+                onChange={(event) =>
+                  setAssemblyId(event.target.value as AssemblyId)
+                }
               >
                 {species.assemblies.map((assembly) => (
                   <option key={assembly.id} value={assembly.id}>
@@ -142,20 +164,26 @@ export default function UploadPage() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-[1fr_240px]">
-            <div className="rounded-2xl border border-genome-border bg-muted/40 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+            <div className="border-genome-border bg-muted/40 rounded-2xl border p-4">
+              <p className="text-xs tracking-[0.2em] text-slate-500 uppercase">
                 Pipeline mode
               </p>
-              <p className="mt-3 text-sm font-semibold text-white">Plant research workbench</p>
-              <p className="mt-2 text-sm leading-6 text-slate-400">
-                `VCF` проходит через Ensembl overlap-driven annotation и heuristic impact
-                inference. `BAM/FASTA/BED` создают persistent queued run с сохранением файла
-                и явным статусом ожидания backend pipeline.
+              <p className="mt-3 text-sm font-semibold text-white">
+                Plant research workbench
+              </p>
+              <p
+                id="upload-pipeline-help"
+                className="mt-2 text-sm leading-6 text-slate-400"
+              >
+                `VCF` проходит через Ensembl overlap-driven annotation и
+                heuristic impact inference. `BAM/FASTA/BED` создают persistent
+                queued run с сохранением файла и явным статусом ожидания backend
+                pipeline.
               </p>
             </div>
 
-            <div className="rounded-2xl border border-genome-border bg-muted/40 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+            <div className="border-genome-border bg-muted/40 rounded-2xl border p-4">
+              <p className="text-xs tracking-[0.2em] text-slate-500 uppercase">
                 Arabidopsis depth
               </p>
               <p className="mt-3 text-sm font-semibold text-white">
@@ -187,29 +215,36 @@ export default function UploadPage() {
                 ? 'border-primary bg-primary/5 shadow-[0_0_0_1px_rgba(45,212,191,0.15)]'
                 : 'border-genome-border bg-muted/40'
             }`}
+            aria-describedby="upload-pipeline-help upload-dropzone-help"
           >
             {!file ? (
               <div className="flex flex-col items-center text-center">
-                <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-[1.75rem] bg-primary/10 text-primary">
-                  <Upload size={34} />
+                <div className="bg-primary/10 text-primary mb-5 flex h-20 w-20 items-center justify-center rounded-[1.75rem]">
+                  <Upload size={34} aria-hidden="true" />
                 </div>
                 <h2 className="text-xl font-semibold text-white">
                   Перетащите plant genomics файл в область загрузки
                 </h2>
-                <p className="mt-3 max-w-xl text-sm leading-7 text-slate-400">
-                  Для `VCF` вы получите plant-specific consequence terms и live workbench. Для
-                  `BAM/FASTA/BED` приложение сохранит run локально и честно покажет queued state,
-                  пока тяжёлый backend не подключён.
+                <p
+                  id="upload-dropzone-help"
+                  className="mt-3 max-w-xl text-sm leading-7 text-slate-400"
+                >
+                  Для `VCF` вы получите plant-specific consequence terms и live
+                  workbench. Для `BAM/FASTA/BED` приложение сохранит run
+                  локально и честно покажет queued state, пока тяжёлый backend
+                  не подключён.
                 </p>
                 <Button
+                  type="button"
                   size="lg"
                   className="mt-8 h-12 rounded-full px-8"
-                  onClick={() => document.getElementById('genome-file')?.click()}
+                  onClick={openFilePicker}
                 >
                   Выбрать файл
                 </Button>
                 <input
                   id="genome-file"
+                  ref={fileInputRef}
                   type="file"
                   accept={acceptedExtensions.join(',')}
                   className="hidden"
@@ -222,8 +257,8 @@ export default function UploadPage() {
               </div>
             ) : (
               <div className="space-y-6">
-                <div className="flex items-start gap-4 rounded-3xl border border-genome-border bg-genome-card/70 p-5">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary/10 text-secondary">
+                <div className="border-genome-border bg-genome-card/70 flex items-start gap-4 rounded-3xl border p-5">
+                  <div className="bg-secondary/10 text-secondary flex h-12 w-12 items-center justify-center rounded-2xl">
                     <File size={22} />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -237,7 +272,7 @@ export default function UploadPage() {
                   {!isLoading ? (
                     <button
                       type="button"
-                      onClick={() => setFile(null)}
+                      onClick={clearSelectedFile}
                       className="rounded-full p-2 text-slate-500 transition-colors hover:bg-white/5 hover:text-white"
                       aria-label="Удалить файл"
                     >
@@ -246,14 +281,27 @@ export default function UploadPage() {
                   ) : null}
                 </div>
 
-                <div className="rounded-3xl border border-genome-border bg-muted/40 p-5">
+                <div className="border-genome-border bg-muted/40 rounded-3xl border p-5">
                   <div className="mb-4 flex items-center justify-between text-sm">
                     <span className="text-slate-400">Статус обработки</span>
-                    <span className="font-semibold text-primary">{progress}%</span>
+                    <span
+                      className="text-primary font-semibold"
+                      role="status"
+                      aria-live="polite"
+                    >
+                      {progress}%
+                    </span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-genome-border">
+                  <div
+                    className="bg-genome-border h-2 overflow-hidden rounded-full"
+                    role="progressbar"
+                    aria-label="Прогресс анализа"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={progress}
+                  >
                     <div
-                      className="h-full rounded-full genome-gradient transition-all duration-300"
+                      className="genome-gradient h-full rounded-full transition-all duration-300"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
@@ -279,15 +327,28 @@ export default function UploadPage() {
           </div>
 
           {activeError ? (
-            <div className="flex gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
-              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+            <div
+              className="border-destructive/20 bg-destructive/5 text-destructive flex gap-3 rounded-2xl border p-4 text-sm"
+              role="alert"
+            >
+              <AlertCircle
+                className="mt-0.5 h-5 w-5 shrink-0"
+                aria-hidden="true"
+              />
               <p>{activeError}</p>
             </div>
           ) : null}
 
           {progress === 100 && !activeError && file ? (
-            <div className="flex gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm text-primary">
-              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+            <div
+              className="border-primary/20 bg-primary/5 text-primary flex gap-3 rounded-2xl border p-4 text-sm"
+              role="status"
+              aria-live="polite"
+            >
+              <CheckCircle2
+                className="mt-0.5 h-5 w-5 shrink-0"
+                aria-hidden="true"
+              />
               <p>Анализ завершён. Открываю plant research dashboard.</p>
             </div>
           ) : null}
@@ -299,17 +360,20 @@ export default function UploadPage() {
           <CardHeader>
             <CardTitle>Поддерживаемые форматы</CardTitle>
             <CardDescription>
-              Все форматы валидируются в UI, но только VCF сейчас завершается live-аннотацией.
+              Все форматы валидируются в UI, но только VCF сейчас завершается
+              live-аннотацией.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {SUPPORTED_FORMATS.map((format) => (
               <div
                 key={format.extension}
-                className="rounded-2xl border border-genome-border bg-muted/40 p-4"
+                className="border-genome-border bg-muted/40 rounded-2xl border p-4"
               >
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-white">{format.label}</p>
+                  <p className="text-sm font-semibold text-white">
+                    {format.label}
+                  </p>
                   <Badge variant="outline">{format.extension}</Badge>
                 </div>
                 <p className="mt-2 text-sm leading-6 text-slate-400">
@@ -328,17 +392,18 @@ export default function UploadPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-start gap-3 rounded-2xl border border-genome-border bg-muted/40 p-4">
-              <Leaf className="mt-0.5 h-5 w-5 text-primary" />
+            <div className="border-genome-border bg-muted/40 flex items-start gap-3 rounded-2xl border p-4">
+              <Leaf className="text-primary mt-0.5 h-5 w-5" />
               <p className="text-sm leading-6 text-slate-400">
-                Dashboard разворачивает focus gene в expression, regulation, GO, orthology
-                и evidence cards.
+                Dashboard разворачивает focus gene в expression, regulation, GO,
+                orthology и evidence cards.
               </p>
             </div>
-            <div className="flex items-start gap-3 rounded-2xl border border-genome-border bg-muted/40 p-4">
-              <Database className="mt-0.5 h-5 w-5 text-secondary" />
+            <div className="border-genome-border bg-muted/40 flex items-start gap-3 rounded-2xl border p-4">
+              <Database className="text-secondary mt-0.5 h-5 w-5" />
               <p className="text-sm leading-6 text-slate-400">
-                История запусков теперь переживает reload и хранится в локальном workspace `.phyto/`.
+                История запусков теперь переживает reload и хранится в локальном
+                workspace `.phyto/`.
               </p>
             </div>
           </CardContent>

@@ -25,15 +25,24 @@ export default function RootLayout({
   return (
     <html lang="ru" className="dark">
       <body
-        className={`${plex.variable} min-h-dvh bg-genome-bg font-sans text-foreground antialiased selection:bg-primary/20`}
+        className={`${plex.variable} bg-genome-bg text-foreground selection:bg-primary/20 min-h-dvh font-sans antialiased`}
       >
+        <a
+          href="#main-content"
+          className="focus:bg-primary focus:text-primary-foreground sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:rounded-xl focus:px-4 focus:py-2 focus:text-sm focus:font-semibold"
+        >
+          Перейти к основному содержимому
+        </a>
         <div className="noise-bg fixed inset-0" />
         <div className="relative flex min-h-dvh">
           <Sidebar />
 
           <div className="flex min-h-dvh flex-1 flex-col lg:pl-64">
             <Header />
-            <main className="flex-1 px-4 pb-24 pt-6 md:px-6 md:pt-8 lg:px-8 lg:pb-8">
+            <main
+              id="main-content"
+              className="flex-1 px-4 pt-6 pb-24 md:px-6 md:pt-8 lg:px-8 lg:pb-8"
+            >
               <div className="mx-auto w-full max-w-7xl">{children}</div>
             </main>
             <Footer />
