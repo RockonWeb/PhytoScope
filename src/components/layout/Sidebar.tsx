@@ -88,15 +88,6 @@ export const Sidebar = () => {
               не ломает страницу целиком.
             </p>
           </div>
-          <div className="border-genome-border bg-muted/40 rounded-xl border px-3 py-2.5">
-            <p className="text-xs tracking-[0.18em] text-slate-400 uppercase">
-              Локальная сессия
-            </p>
-            <p className="mt-2 text-sm leading-6 text-slate-300">
-              Авторизация не используется, поэтому завершать сессию здесь не
-              требуется.
-            </p>
-          </div>
           <div className="border-genome-border bg-muted/20 rounded-xl border px-3 py-2.5">
             <p className="text-xs tracking-[0.18em] text-slate-400 uppercase">
               Версия
