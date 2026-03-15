@@ -276,6 +276,29 @@ export interface UploadAnalysisResult {
   workbench: WorkbenchData | null
 }
 
+export interface ReportFilters {
+  search?: string
+  speciesId?: SpeciesId | 'all'
+  status?: AnalysisStatus | 'all'
+  format?: SupportedFormat | 'all'
+}
+
+export interface RunComparisonSummary {
+  sharedVariantCount: number
+  leftOnlyVariantCount: number
+  rightOnlyVariantCount: number
+  sharedGeneCount: number
+  leftOnlyGeneCount: number
+  rightOnlyGeneCount: number
+  variantCountDelta: number
+  highImpactDelta: number
+  meanDepthDelta: number
+  meanQualityDelta: number
+  sharedGenes: string[]
+  leftOnlyGenes: string[]
+  rightOnlyGenes: string[]
+}
+
 export interface LiteratureFilters {
   yearFrom: number
   sort: LiteratureSort

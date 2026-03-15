@@ -62,11 +62,14 @@ function DashboardPageContent() {
     return (
       <Card className="mx-auto max-w-2xl">
         <CardContent className="flex flex-col items-center gap-5 py-14 text-center">
-          <Microscope className="h-10 w-10 text-primary" />
+          <Microscope className="text-primary h-10 w-10" />
           <div>
-            <p className="text-xl font-semibold text-white">Нет доступного анализа</p>
+            <p className="text-xl font-semibold text-white">
+              Нет доступного анализа
+            </p>
             <p className="mt-2 text-sm text-slate-400">
-              Запустите upload pipeline или откройте один из готовых plant reports.
+              Запустите upload pipeline или откройте один из готовых plant
+              reports.
             </p>
           </div>
           <Button asChild>
@@ -96,11 +99,15 @@ function DashboardPageContent() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <div className="rounded-2xl border border-genome-border bg-muted/40 p-4 text-sm text-slate-300">
+          <div className="border-genome-border bg-muted/40 rounded-2xl border p-4 text-sm text-slate-300">
             Текущий статус:{' '}
-            <span className="font-semibold text-white">{currentAnalysis.status}</span>
+            <span className="font-semibold text-white">
+              {currentAnalysis.status}
+            </span>
             {currentAnalysis.statusDetail ? (
-              <p className="mt-2 text-slate-400">{currentAnalysis.statusDetail}</p>
+              <p className="mt-2 text-slate-400">
+                {currentAnalysis.statusDetail}
+              </p>
             ) : null}
           </div>
           <div className="flex gap-3">
@@ -125,17 +132,27 @@ function DashboardPageContent() {
             Upload-first plant dashboard
           </h1>
           <p className="mt-2 text-sm text-slate-400">
-            {currentAnalysis.fileName} · {currentAnalysis.speciesId} · {currentAnalysis.assemblyId}
+            {currentAnalysis.fileName} · {currentAnalysis.speciesId} ·{' '}
+            {currentAnalysis.assemblyId}
           </p>
           {currentAnalysis.statusDetail ? (
-            <p className="mt-2 text-sm text-slate-500">{currentAnalysis.statusDetail}</p>
+            <p className="mt-2 text-sm text-slate-500">
+              {currentAnalysis.statusDetail}
+            </p>
           ) : null}
         </div>
         <div className="flex flex-wrap gap-3">
-          <Button variant="outline" onClick={() => downloadVariantsCsv(currentAnalysis, variants)}>
+          <Button
+            variant="outline"
+            onClick={() => downloadVariantsCsv(currentAnalysis, variants)}
+          >
             CSV
           </Button>
-          <Button onClick={() => printAnalysisReport(currentAnalysis, variants)}>PDF</Button>
+          <Button
+            onClick={() => printAnalysisReport(currentAnalysis, variants)}
+          >
+            PDF
+          </Button>
           <Button asChild variant="outline">
             <Link
               href={`/literature?q=${encodeURIComponent(
@@ -151,15 +168,17 @@ function DashboardPageContent() {
           </Button>
           <Button asChild variant="ghost">
             <Link href="/reports">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              К отчётам
+              <ArrowLeft className="mr-2 h-4 w-4" />К отчётам
             </Link>
           </Button>
         </div>
       </div>
 
       {error ? (
-        <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+        <div
+          className="border-destructive/20 bg-destructive/5 text-destructive rounded-2xl border px-4 py-3 text-sm"
+          role="alert"
+        >
           {error}
         </div>
       ) : null}
@@ -178,7 +197,8 @@ function DashboardPageContent() {
           <CardHeader>
             <CardTitle>Research workbench недоступен</CardTitle>
             <CardDescription>
-              Для этого run не удалось собрать full workbench. Variant export остаётся доступным.
+              Для этого run не удалось собрать full workbench. Variant export
+              остаётся доступным.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -193,7 +213,9 @@ function DashboardLoadingState() {
       <CardContent className="flex flex-col items-center gap-4 py-14 text-center">
         <Spinner className="h-8 w-8" />
         <div>
-          <p className="text-lg font-semibold text-white">Подгружаю plant analysis</p>
+          <p className="text-lg font-semibold text-white">
+            Подгружаю plant analysis
+          </p>
           <p className="mt-2 text-sm text-slate-400">
             Загружаю persistent analysis record и связанный research workbench.
           </p>

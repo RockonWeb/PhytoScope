@@ -30,7 +30,12 @@ import {
   TableRow,
 } from '@/components/ui/Table'
 import { analysisService } from '@/services/analysisService'
-import type { AnalysisSummary, ChartData, GenomeContextPoint, WorkbenchData } from '@/types/genome'
+import type {
+  AnalysisSummary,
+  ChartData,
+  GenomeContextPoint,
+  WorkbenchData,
+} from '@/types/genome'
 
 const numberFormatter = new Intl.NumberFormat('ru-RU')
 
@@ -49,9 +54,15 @@ export function WorkbenchResults({
   summary?: AnalysisSummary | null
   title?: string
 }) {
-  const chromosomeData = analysisService.calculateChromosomeDistribution(workbench.variants)
-  const impactData = analysisService.calculateImpactDistribution(workbench.variants)
-  const contextPoints = analysisService.buildGenomeContextPoints(workbench.variants)
+  const chromosomeData = analysisService.calculateChromosomeDistribution(
+    workbench.variants,
+  )
+  const impactData = analysisService.calculateImpactDistribution(
+    workbench.variants,
+  )
+  const contextPoints = analysisService.buildGenomeContextPoints(
+    workbench.variants,
+  )
 
   return (
     <div className="space-y-6">
@@ -75,16 +86,31 @@ export function WorkbenchResults({
             <div className="flex flex-wrap gap-2">
               <Badge variant="success">{workbench.species.label}</Badge>
               <Badge variant="outline">{workbench.query.type}</Badge>
-              {workbench.gene ? <Badge variant="outline">{workbench.gene.assemblyId}</Badge> : null}
-              {summary ? <Badge variant="outline">{summary.fileName}</Badge> : null}
+              {workbench.gene ? (
+                <Badge variant="outline">{workbench.gene.assemblyId}</Badge>
+              ) : null}
+              {summary ? (
+                <Badge variant="outline">{summary.fileName}</Badge>
+              ) : null}
             </div>
 
             {workbench.gene ? (
               <div className="grid gap-3 md:grid-cols-2">
-                <MetaCard label="Локус" value={`${workbench.gene.location.chromosome}:${numberFormatter.format(workbench.gene.location.start)}-${numberFormatter.format(workbench.gene.location.end)}`} />
+                <MetaCard
+                  label="Локус"
+                  value={`${workbench.gene.location.chromosome}:${numberFormatter.format(workbench.gene.location.start)}-${numberFormatter.format(workbench.gene.location.end)}`}
+                />
                 <MetaCard label="Биотип" value={workbench.gene.biotype} />
-                <MetaCard label="Алиасы" value={workbench.gene.aliases.slice(0, 4).join(', ') || '—'} />
-                <MetaCard label="Источники" value={workbench.gene.sourceSummaries.map((item) => item.label).join(', ')} />
+                <MetaCard
+                  label="Алиасы"
+                  value={workbench.gene.aliases.slice(0, 4).join(', ') || '—'}
+                />
+                <MetaCard
+                  label="Источники"
+                  value={workbench.gene.sourceSummaries
+                    .map((item) => item.label)
+                    .join(', ')}
+                />
               </div>
             ) : null}
 
@@ -117,7 +143,8 @@ export function WorkbenchResults({
           <CardHeader>
             <CardTitle>Source status</CardTitle>
             <CardDescription>
-              Любой источник может деградировать до partial cards, но не ломает страницу.
+              Любой источник может деградировать до partial cards, но не ломает
+              страницу.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -125,17 +152,23 @@ export function WorkbenchResults({
               workbench.sourceStatus.map((status) => (
                 <div
                   key={status.source}
-                  className="rounded-2xl border border-genome-border bg-muted/40 p-4"
+                  className="border-genome-border bg-muted/40 rounded-2xl border p-4"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-white">{status.label}</p>
-                      <p className="mt-1 text-xs text-slate-500">{status.detail}</p>
-                      <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-slate-600">
+                      <p className="text-sm font-semibold text-white">
+                        {status.label}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {status.detail}
+                      </p>
+                      <p className="mt-2 text-[11px] tracking-[0.18em] text-slate-600 uppercase">
                         {status.observedVia} · {status.lastChecked}
                       </p>
                     </div>
-                    <span className={`rounded-full px-3 py-1 text-xs font-medium ${healthClasses[status.status]}`}>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${healthClasses[status.status]}`}
+                    >
                       {status.status}
                     </span>
                   </div>
@@ -184,7 +217,8 @@ export function WorkbenchResults({
           <CardHeader>
             <CardTitle>Expression</CardTitle>
             <CardDescription>
-              Приоритетный слой для Arabidopsis-first interpretation: tissues, contexts и atlas cues.
+              Приоритетный слой для Arabidopsis-first interpretation: tissues,
+              contexts и atlas cues.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -200,7 +234,8 @@ export function WorkbenchResults({
           <CardHeader>
             <CardTitle>Regulation</CardTitle>
             <CardDescription>
-              Сводка кураторских, computational и literature-backed regulatory signals.
+              Сводка кураторских, computational и literature-backed regulatory
+              signals.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -208,15 +243,19 @@ export function WorkbenchResults({
               workbench.regulation.map((item) => (
                 <div
                   key={`${item.source}-${item.title}`}
-                  className="rounded-2xl border border-genome-border bg-muted/40 p-4"
+                  className="border-genome-border bg-muted/40 rounded-2xl border p-4"
                 >
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-semibold text-white">{item.title}</p>
+                    <p className="text-sm font-semibold text-white">
+                      {item.title}
+                    </p>
                     <Badge variant="outline">{item.evidenceType}</Badge>
                     <Badge variant="outline">{item.source}</Badge>
                   </div>
-                  <p className="mt-3 text-sm leading-7 text-slate-300">{item.summary}</p>
-                  <p className="mt-3 text-xs uppercase tracking-[0.18em] text-slate-500">
+                  <p className="mt-3 text-sm leading-7 text-slate-300">
+                    {item.summary}
+                  </p>
+                  <p className="mt-3 text-xs tracking-[0.18em] text-slate-500 uppercase">
                     Score {item.score} · {item.tags.join(' · ')}
                   </p>
                 </div>
@@ -233,7 +272,8 @@ export function WorkbenchResults({
           <CardHeader>
             <CardTitle>Genome context</CardTitle>
             <CardDescription>
-              Локусный контекст по текущим variant cards вместо дефолтного clinical Manhattan plot.
+              Локусный контекст по текущим variant cards вместо дефолтного
+              clinical Manhattan plot.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -254,7 +294,8 @@ export function WorkbenchResults({
           <CardHeader>
             <CardTitle>Function / GO</CardTitle>
             <CardDescription>
-              Ontology-backed terms, plant ontology and high-signal function cues.
+              Ontology-backed terms, plant ontology and high-signal function
+              cues.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -262,13 +303,15 @@ export function WorkbenchResults({
               workbench.functionTerms.map((term) => (
                 <div
                   key={`${term.id}-${term.label}`}
-                  className="rounded-2xl border border-genome-border bg-muted/40 p-4"
+                  className="border-genome-border bg-muted/40 rounded-2xl border p-4"
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="outline">{term.category}</Badge>
-                    <p className="text-sm font-semibold text-white">{term.label}</p>
+                    <p className="text-sm font-semibold text-white">
+                      {term.label}
+                    </p>
                   </div>
-                  <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-500">
+                  <p className="mt-2 text-xs tracking-[0.18em] text-slate-500 uppercase">
                     {term.id} · {term.source}
                   </p>
                 </div>
@@ -311,7 +354,8 @@ export function WorkbenchResults({
             <div>
               <CardTitle>Evidence / literature</CardTitle>
               <CardDescription>
-                Curated summaries + links с быстрым переходом в отдельный literature workspace.
+                Curated summaries + links с быстрым переходом в отдельный
+                literature workspace.
               </CardDescription>
             </div>
             <Button asChild variant="outline" size="sm">
@@ -336,15 +380,19 @@ export function WorkbenchResults({
                 href={item.url}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-2xl border border-genome-border bg-muted/40 p-5 transition-colors hover:border-primary/40"
+                className="border-genome-border bg-muted/40 hover:border-primary/40 rounded-2xl border p-5 transition-colors"
               >
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">{item.year}</Badge>
                   <Badge variant="outline">{item.journal}</Badge>
                 </div>
-                <p className="mt-3 text-base font-semibold text-white">{item.title}</p>
-                <p className="mt-3 text-sm leading-7 text-slate-300">{item.snippet}</p>
-                <p className="mt-3 text-xs uppercase tracking-[0.18em] text-slate-500">
+                <p className="mt-3 text-base font-semibold text-white">
+                  {item.title}
+                </p>
+                <p className="mt-3 text-sm leading-7 text-slate-300">
+                  {item.snippet}
+                </p>
+                <p className="mt-3 text-xs tracking-[0.18em] text-slate-500 uppercase">
                   {item.authors.join(', ')}
                   {item.citedByCount ? ` · cited by ${item.citedByCount}` : ''}
                 </p>
@@ -360,7 +408,8 @@ export function WorkbenchResults({
         <CardHeader>
           <CardTitle>Variant context</CardTitle>
           <CardDescription>
-            Variant-first и upload-first сценарии сходятся здесь в одном plant-aware table view.
+            Variant-first и upload-first сценарии сходятся здесь в одном
+            plant-aware table view.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -381,30 +430,48 @@ export function WorkbenchResults({
                   <TableRow key={variant.id}>
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="font-semibold text-white">{variant.geneSymbol}</span>
-                        <span className="font-mono text-xs text-slate-500">{variant.geneId ?? variant.id}</span>
+                        <span className="font-semibold text-white">
+                          {variant.geneSymbol}
+                        </span>
+                        <span className="font-mono text-xs text-slate-500">
+                          {variant.geneId ?? variant.id}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="font-mono text-xs text-slate-300">
-                      {variant.chromosome}:{numberFormatter.format(variant.position)}
+                      {variant.chromosome}:
+                      {numberFormatter.format(variant.position)}
                     </TableCell>
                     <TableCell className="font-mono text-xs text-slate-300">
                       {variant.reference} {'>'} {variant.alternate}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={variant.predictedImpact === 'HIGH' ? 'destructive' : variant.predictedImpact === 'MODERATE' ? 'secondary' : 'outline'}>
+                      <Badge
+                        variant={
+                          variant.predictedImpact === 'HIGH'
+                            ? 'destructive'
+                            : variant.predictedImpact === 'MODERATE'
+                              ? 'secondary'
+                              : 'outline'
+                        }
+                      >
                         {variant.predictedImpact}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-slate-300">
                       {variant.consequenceTerms.join(', ')}
                     </TableCell>
-                    <TableCell className="text-sm text-slate-400">{variant.source}</TableCell>
+                    <TableCell className="text-sm text-slate-400">
+                      {variant.source}
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-10 text-center text-slate-500">
+                  <TableCell
+                    colSpan={6}
+                    className="py-10 text-center text-slate-500"
+                  >
                     Для текущего контекста variant cards не найдены.
                   </TableCell>
                 </TableRow>
@@ -438,8 +505,8 @@ function MetricCard({
           <p className="mt-2 text-3xl font-bold text-white">{value}</p>
           <p className="mt-2 text-sm text-slate-500">{helper}</p>
         </div>
-        <div className={`rounded-2xl bg-muted/60 p-3 ${accent}`}>
-          <Icon className="h-5 w-5" />
+        <div className={`bg-muted/60 rounded-2xl p-3 ${accent}`}>
+          <Icon className="h-5 w-5" aria-hidden="true" />
         </div>
       </CardContent>
     </Card>
@@ -448,8 +515,10 @@ function MetricCard({
 
 function MetaCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-genome-border bg-muted/40 p-4">
-      <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{label}</p>
+    <div className="border-genome-border bg-muted/40 rounded-2xl border p-4">
+      <p className="text-xs tracking-[0.18em] text-slate-500 uppercase">
+        {label}
+      </p>
       <p className="mt-3 text-sm font-medium text-white">{value}</p>
     </div>
   )
@@ -457,7 +526,10 @@ function MetaCard({ label, value }: { label: string; value: string }) {
 
 function EmptyPanel({ message }: { message: string }) {
   return (
-    <div className="flex min-h-40 items-center justify-center rounded-3xl border border-dashed border-genome-border bg-muted/30 px-4 text-center text-sm text-slate-500">
+    <div
+      className="border-genome-border bg-muted/30 flex min-h-40 items-center justify-center rounded-3xl border border-dashed px-4 text-center text-sm text-slate-500"
+      role="status"
+    >
       {message}
     </div>
   )
@@ -488,13 +560,13 @@ function ExpressionBlock({ workbench }: { workbench: WorkbenchData }) {
                 {item.value} {item.unit}
               </span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-genome-border">
+            <div className="bg-genome-border h-2 overflow-hidden rounded-full">
               <div
                 className="h-full rounded-full bg-[linear-gradient(90deg,#7dd3fc,#34d399)]"
                 style={{ width: `${(item.value / maxValue) * 100}%` }}
               />
             </div>
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+            <p className="text-xs tracking-[0.18em] text-slate-500 uppercase">
               {item.context}
             </p>
           </div>
@@ -506,7 +578,7 @@ function ExpressionBlock({ workbench }: { workbench: WorkbenchData }) {
           {expression.conditions.map((item) => (
             <div
               key={`${item.label}-${item.context}`}
-              className="rounded-2xl border border-genome-border bg-muted/40 p-4"
+              className="border-genome-border bg-muted/40 rounded-2xl border p-4"
             >
               <p className="text-sm font-semibold text-white">{item.label}</p>
               <p className="mt-2 text-2xl font-bold text-sky-300">
@@ -527,14 +599,24 @@ function ChartCard({ title, data }: { title: string; data: ChartData[] }) {
   }
 
   const maxValue = Math.max(...data.map((item) => item.value), 1)
+  const chartSummary = data
+    .map((item) => `${item.name}: ${item.value}`)
+    .join(', ')
 
   return (
-    <div className="rounded-3xl border border-genome-border bg-muted/30 p-4">
+    <div
+      className="border-genome-border bg-muted/30 rounded-3xl border p-4"
+      role="img"
+      aria-label={`${title}. ${chartSummary}`}
+    >
       <p className="text-sm font-semibold text-white">{title}</p>
       <div className="mt-4 flex h-36 items-end gap-3">
         {data.map((item) => (
-          <div key={item.name} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-            <div className="flex h-28 w-full items-end rounded-2xl bg-muted/60 p-2">
+          <div
+            key={item.name}
+            className="flex min-w-0 flex-1 flex-col items-center gap-2"
+          >
+            <div className="bg-muted/60 flex h-28 w-full items-end rounded-2xl p-2">
               <div
                 className="w-full rounded-xl"
                 style={{
@@ -558,10 +640,18 @@ function GenomeContextTrack({ points }: { points: GenomeContextPoint[] }) {
   const chartWidth = width - padding.left - padding.right
   const chartHeight = height - padding.top - padding.bottom
   const maxScore = Math.max(...points.map((point) => point.score), 1)
+  const chromosomes = Array.from(
+    new Set(points.map((point) => point.chromosome)),
+  ).join(', ')
 
   return (
-    <div className="overflow-hidden rounded-3xl border border-genome-border bg-muted/30 p-4">
-      <svg viewBox={`0 0 ${width} ${height}`} className="h-[220px] w-full">
+    <div className="border-genome-border bg-muted/30 overflow-hidden rounded-3xl border p-4">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="h-[220px] w-full"
+        role="img"
+        aria-label={`Genome context для ${points.length} вариантов на хромосомах ${chromosomes}`}
+      >
         {[0, 1, 2, 3].map((row) => {
           const y = padding.top + (chartHeight / 3) * row
           return (
@@ -578,8 +668,7 @@ function GenomeContextTrack({ points }: { points: GenomeContextPoint[] }) {
         })}
         {points.map((point, index) => {
           const x =
-            padding.left +
-            (index / Math.max(points.length - 1, 1)) * chartWidth
+            padding.left + (index / Math.max(points.length - 1, 1)) * chartWidth
           const y =
             padding.top + chartHeight - (point.score / maxScore) * chartHeight
 
@@ -628,8 +717,8 @@ function EntityListCard({
     <Card>
       <CardHeader>
         <div className="flex items-center gap-3">
-          <div className="rounded-2xl bg-muted/60 p-3 text-secondary">
-            <Icon className="h-5 w-5" />
+          <div className="bg-muted/60 text-secondary rounded-2xl p-3">
+            <Icon className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>
             <CardTitle>{title}</CardTitle>
@@ -642,11 +731,13 @@ function EntityListCard({
           items.map((item) => (
             <div
               key={`${item.title}-${item.meta}`}
-              className="rounded-2xl border border-genome-border bg-muted/40 p-4"
+              className="border-genome-border bg-muted/40 rounded-2xl border p-4"
             >
               <p className="text-sm font-semibold text-white">{item.title}</p>
-              <p className="mt-2 text-sm leading-7 text-slate-300">{item.body}</p>
-              <p className="mt-3 text-xs uppercase tracking-[0.18em] text-slate-500">
+              <p className="mt-2 text-sm leading-7 text-slate-300">
+                {item.body}
+              </p>
+              <p className="mt-3 text-xs tracking-[0.18em] text-slate-500 uppercase">
                 {item.meta}
               </p>
             </div>
