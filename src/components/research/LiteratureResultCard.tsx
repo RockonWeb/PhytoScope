@@ -34,9 +34,14 @@ export function LiteratureResultCard({ item }: { item: LiteratureCard }) {
         <div className="mt-3 space-y-2">
           <p className="text-sm leading-7 text-slate-300">{item.snippet}</p>
           {item.snippetTranslated && item.originalSnippet ? (
-            <p className="text-xs leading-6 text-slate-500">
-              Оригинал: {item.originalSnippet}
-            </p>
+            <details className="rounded-xl border border-slate-800/70 bg-slate-950/30 px-3 py-2">
+              <summary className="cursor-pointer text-xs font-medium tracking-[0.12em] text-slate-500 uppercase">
+                Оригинал аннотации
+              </summary>
+              <p className="mt-3 text-xs leading-6 text-slate-500">
+                {item.originalSnippet}
+              </p>
+            </details>
           ) : null}
         </div>
       </details>
